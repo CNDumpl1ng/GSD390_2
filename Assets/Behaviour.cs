@@ -1,87 +1,53 @@
 using UnityEngine;
 
+
 public class TiltController : MonoBehaviour
 {
     // Static variable to count the instances of TiltController
     private static int instanceCount = 0;
 
-    // Property to manage tilt speed
+    // Property to get or set the tilt speed
     [SerializeField] private float tiltSpeed = 20f;
-    public float TiltSpeed { get { return tiltSpeed; } set { tiltSpeed = Mathf.Max(0, value); } }
 
     // Adjustable tilt limit with an attribute for the Inspector
-    [Range(0, 45)] // Restricts tilt limit between 0 and 45
+    [Range(0, 45)]
     [SerializeField] private float tiltLimit = 30f;
-
-    // Static variable for total ball distance
-    private static float totalBallDistance = 0f;
-    public static float TotalBallDistance => totalBallDistance;
 
     private float currentTiltX = 0f;
     private float currentTiltZ = 0f;
 
-    // Ball object reference
-    [SerializeField] private GameObject ball;
-
-    // Speed for ball movement
-    [SerializeField] private float ballSpeed = 5f;
-
+    // Awake is called when the script instance is being loaded
     private void Awake()
     {
-        // Increment the instance count
+        // Increment the instance count when an instance is created
         instanceCount++;
-        Debug.Log($"TiltController instance created. Total instances: {instanceCount}");
+        Debug.Log("TiltController instance created. Total instances: " + instanceCount);
     }
 
+    // Update is called once per frame
     private void Update()
     {
-        // Handle plane tilt
-        HandleTilt();
+        // Get player input for tilting the plane
+        float inputVertical = Input.GetAxis("Vertical");   // W/S keys
+        float inputHorizontal = Input.GetAxis("Horizontal"); // A/D keys
 
-        // Handle ball movement
-        HandleBallMovement();
-    }
+        // Calculate tilt changes based on input
+        float tiltXChange = inputVertical * tiltSpeed * Time.deltaTime;
+        float tiltZChange = -inputHorizontal * tiltSpeed * Time.deltaTime;
 
-    private void HandleTilt()
-    {
-        // Get player input for tilt
-        float inputVertical = Input.GetAxis("Vertical");
-        float inputHorizontal = Input.GetAxis("Horizontal");
-
-        // Calculate tilt changes
-        float tiltXChange = inputVertical * TiltSpeed * Time.deltaTime;
-        float tiltZChange = -inputHorizontal * TiltSpeed * Time.deltaTime;
-
-        // Update tilt angles within limits
+        // Update cumulative tilt values, ensuring they stay within the tilt limit
         currentTiltX = Mathf.Clamp(currentTiltX + tiltXChange, -tiltLimit, tiltLimit);
         currentTiltZ = Mathf.Clamp(currentTiltZ + tiltZChange, -tiltLimit, tiltLimit);
 
-        // Apply rotation to the plane
-        transform.localRotation = Quaternion.Euler(currentTiltX, 0, currentTiltZ);
+        // Apply the cumulative tilt to the plane
+        transform.rotation = Quaternion.Euler(currentTiltX, 0, currentTiltZ);
     }
 
-    private void HandleBallMovement()
-    {
-        if (ball == null) return;
-
-        // Get player input for ball movement
-        float moveX = Input.GetAxis("Horizontal");
-        float moveZ = Input.GetAxis("Vertical");
-
-        // Calculate ball movement
-        Vector3 movement = new Vector3(moveX, 0, moveZ) * ballSpeed * Time.deltaTime;
-
-        // Update ball position and accumulate total distance
-        ball.transform.Translate(movement, Space.World);
-        totalBallDistance += movement.magnitude;
-
-        Debug.Log($"Total ball distance traveled: {TotalBallDistance:F2}");
-    }
-
+    // OnDestroy is called when the object is destroyed
     private void OnDestroy()
     {
-        // Decrement the instance count
+        // Decrement the instance count when an instance is destroyed
         instanceCount--;
-        Debug.Log($"TiltController instance destroyed. Remaining instances: {instanceCount}");
+        Debug.Log("TiltController instance destroyed. Remaining instances: " + instanceCount);
     }
 }
